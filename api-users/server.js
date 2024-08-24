@@ -1,57 +1,69 @@
 const express = require('express');
 const app = express();
+const db = require('./src/config/dbConnect');
+const users = require('./src/models/users.model.js')
 
-// Middleware to parse JSON bodies
+db.on('error', console.log.bind(console, 'Connection Error'));
+db.once('open', () => {
+    console.log('db connection succesful!')
+})
+
 app.use(express.json());
 
-let users = []; // In-memory "database" for users
-
-// Create a user (C - Create)
-app.post('/users', (req, res) => {
+app.post('/users', async (req, res) => {
     const user = req.body;
-    user.id = users.length + 1; // Simple ID assignment
-    users.push(user);
-    res.status(201).send(user);
-});
 
-// Get all users (R - Read)
-app.get('/users', (req, res) => {
-    res.send(users);
-});
-
-// Get a single user by ID (R - Read)
-app.get('/users/:id', (req, res) => {
-    const userId = parseInt(req.params.id);
-    const user = users.find(u => u.id === userId);
-    if (!user) {
-        return res.status(404).send({ message: 'User not found' });
+    try {
+        await users.insertMany([user]);
+        res.status(201).send('user added!')
+    } catch(err) {
+        res.status(500);
     }
-    res.send(user);
 });
 
-// Update a user by ID (U - Update)
-app.put('/users/:id', (req, res) => {
-    const userId = parseInt(req.params.id);
-    const userIndex = users.findIndex(u => u.id === userId);
-    if (userIndex === -1) {
-        return res.status(404).send({ message: 'User not found' });
+app.get('/users', async (req, res) => {
+    try {
+        const result = await users.find({});
+        res.status(200).json(result);
+    } catch(err) {
+        console.log(err);
+        res.status(500);
     }
-    users[userIndex] = { ...users[userIndex], ...req.body };
-    res.send(users[userIndex]);
 });
 
-// Delete a user by ID (D - Delete)
-app.delete('/users/:id', (req, res) => {
-    const userId = parseInt(req.params.id);
-    const userIndex = users.findIndex(u => u.id === userId);
-    if (userIndex === -1) {
-        return res.status(404).send({ message: 'User not found' });
+app.get('/users/:id', async (req, res) => {
+    const _id = req.params.id;
+    
+    try {
+        const result = await users.find({ _id });
+        res.status(200).json(result);
+    } catch(err) {
+        res.status(500);
     }
-    users.splice(userIndex, 1);
-    res.status(204).send(); // No content
 });
 
-// Start the server
+app.put('/users/:id', async (req, res) => {
+    const _id = req.params.id;
+    const body = req.body;
+
+    try {
+        await users.updateOne({ _id }, { $set: body });
+        res.status(200).json(result);
+    } catch(err) {
+        res.status(500);
+    }
+});
+
+app.delete('/users/:id', async (req, res) => {
+    const _id = req.params.id;
+    try {
+        await users.deleteOne({ _id });
+        res.status(200).send('contact deleted')
+    } catch(err) {
+        res.status(500);
+    }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
