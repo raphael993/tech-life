@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
+require('dotenv').config();
 
-mongoose.connect('mongodb+srv://raphael:raphael@cluster0.y9ptd.mongodb.net/users');
+mongoose.connect(process.env.MONGO_STR_CONNECTION);
 
 const db = mongoose.connection;
 
