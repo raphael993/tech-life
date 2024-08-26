@@ -51,6 +51,11 @@ app.delete('/users/:id', (req, res) => {
     res.status(204).send(); // No content
 });
 
+app.delete('/users/admin/delete-all', (req, res) => {
+    users = [];
+    res.status(204).send({ message: 'All data was removed!' });
+})
+
 // Start the server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
