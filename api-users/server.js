@@ -1,7 +1,9 @@
 const express = require('express');
 const app = express();
 const db = require('./src/config/dbConnect');
-const users = require('./src/models/users.model.js')
+
+const UsersController = require('./src/controllers/users.controller.js');
+const ProductsController = require('./src/controllers/products.controller.js');
 
 db.on('error', console.log.bind(console, 'Connection Error'));
 db.once('open', () => {
@@ -10,59 +12,30 @@ db.once('open', () => {
 
 app.use(express.json());
 
-app.post('/users', async (req, res) => {
-    const user = req.body;
+// USERS ROUTES
 
-    try {
-        await users.insertMany([user]);
-        res.status(201).send('user added!')
-    } catch(err) {
-        res.status(500);
-    }
-});
+app.post('/users', UsersController.createUser);
 
-app.get('/users', async (req, res) => {
-    try {
-        const result = await users.find({});
-        res.status(200).json(result);
-    } catch(err) {
-        console.log(err);
-        res.status(500);
-    }
-});
+app.get('/users', UsersController.getUsers);
 
-app.get('/users/:id', async (req, res) => {
-    const _id = req.params.id;
-    
-    try {
-        const result = await users.find({ _id });
-        res.status(200).json(result);
-    } catch(err) {
-        res.status(500);
-    }
-});
+app.get('/users/:id', UsersController.getUser);
 
-app.put('/users/:id', async (req, res) => {
-    const _id = req.params.id;
-    const body = req.body;
+app.put('/users/:id', UsersController.updateUser);
 
-    try {
-        await users.updateOne({ _id }, { $set: body });
-        res.status(200).json(result);
-    } catch(err) {
-        res.status(500);
-    }
-});
+// PRODUCTS ROUTES
 
-app.delete('/users/:id', async (req, res) => {
-    const _id = req.params.id;
-    try {
-        await users.deleteOne({ _id });
-        res.status(200).send('contact deleted')
-    } catch(err) {
-        res.status(500);
-    }
-});
+app.delete('/products/:id', ProductsController.deleteProduct);
+
+app.post('/products', ProductsController.createProduct);
+
+app.get('/products', ProductsController.getProducts);
+
+app.get('/products/:id', ProductsController.getProduct);
+
+app.put('/products/:id', ProductsController.updateProduct);
+
+app.delete('/products/:id', ProductsController.deleteProduct);
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
