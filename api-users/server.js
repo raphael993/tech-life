@@ -1,62 +1,42 @@
 const express = require('express');
 const app = express();
+const db = require('./src/config/dbConnect');
 
-// Middleware to parse JSON bodies
-app.use(express.json());
+const UsersController = require('./src/controllers/users.controller.js');
+const ProductsController = require('./src/controllers/products.controller.js');
 
-let users = []; // In-memory "database" for users
-
-// Create a user (C - Create)
-app.post('/users', (req, res) => {
-    const user = req.body;
-    user.id = users.length + 1; // Simple ID assignment
-    users.push(user);
-    res.status(201).send(user);
-});
-
-// Get all users (R - Read)
-app.get('/users', (req, res) => {
-    res.send(users);
-});
-
-// Get a single user by ID (R - Read)
-app.get('/users/:id', (req, res) => {
-    const userId = parseInt(req.params.id);
-    const user = users.find(u => u.id === userId);
-    if (!user) {
-        return res.status(404).send({ message: 'User not found' });
-    }
-    res.send(user);
-});
-
-// Update a user by ID (U - Update)
-app.put('/users/:id', (req, res) => {
-    const userId = parseInt(req.params.id);
-    const userIndex = users.findIndex(u => u.id === userId);
-    if (userIndex === -1) {
-        return res.status(404).send({ message: 'User not found' });
-    }
-    users[userIndex] = { ...users[userIndex], ...req.body };
-    res.send(users[userIndex]);
-});
-
-// Delete a user by ID (D - Delete)
-app.delete('/users/:id', (req, res) => {
-    const userId = parseInt(req.params.id);
-    const userIndex = users.findIndex(u => u.id === userId);
-    if (userIndex === -1) {
-        return res.status(404).send({ message: 'User not found' });
-    }
-    users.splice(userIndex, 1);
-    res.status(204).send(); // No content
-});
-
-app.delete('/users/admin/delete-all', (req, res) => {
-    users = [];
-    res.status(204).send({ message: 'All data was removed!' });
+db.on('error', console.log.bind(console, 'Connection Error'));
+db.once('open', () => {
+    console.log('db connection succesful!')
 })
 
-// Start the server
+app.use(express.json());
+
+// USERS ROUTES
+
+app.post('/users', UsersController.createUser);
+
+app.get('/users', UsersController.getUsers);
+
+app.get('/users/:id', UsersController.getUser);
+
+app.put('/users/:id', UsersController.updateUser);
+
+// PRODUCTS ROUTES
+
+app.delete('/products/:id', ProductsController.deleteProduct);
+
+app.post('/products', ProductsController.createProduct);
+
+app.get('/products', ProductsController.getProducts);
+
+app.get('/products/:id', ProductsController.getProduct);
+
+app.put('/products/:id', ProductsController.updateProduct);
+
+app.delete('/products/:id', ProductsController.deleteProduct);
+
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
